@@ -14,13 +14,14 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils import logging
 
-from tools.transformers.interface import GenerationConfig, generate_interactive
-from openxlab.model import download
-
-download(model_repo='jujimeizuo/jujimeizuo_assistant_model', output='model')
-
+from interface import GenerationConfig, generate_interactive
 
 logger = logging.get_logger(__name__)
+
+from modelscope import snapshot_download
+
+model_id = 'yondong/personal-assistant'
+model_dir = snapshot_download(model_id)
 
 
 def on_btn_click():
@@ -30,10 +31,11 @@ def on_btn_click():
 @st.cache_resource
 def load_model():
     model = (
-        AutoModelForCausalLM.from_pretrained("model", trust_remote_code=True)
+        AutoModelForCausalLM.from_pretrained(model_dir, trust_remote_code=True)
         .to(torch.bfloat16)
+        .cuda()
     )
-    tokenizer = AutoTokenizer.from_pretrained("model", trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
     return model, tokenizer
 
 
@@ -71,14 +73,15 @@ def combine_history(prompt):
 
 
 def main():
+    # torch.cuda.empty_cache()
     print("load model begin.")
     model, tokenizer = load_model()
     print("load model end.")
 
-    user_avator = "images/user.png"
-    robot_avator = "images/robot.png"
+    user_avator = "./images/user.png"
+    robot_avator = "./images/robot.png"
 
-    st.title("InternLM-Chat-7B")
+    st.title("UncleLLD personal assistant")
 
     generation_config = prepare_generation_config()
 
@@ -114,7 +117,7 @@ def main():
             message_placeholder.markdown(cur_response)
         # Add robot response to chat history
         st.session_state.messages.append({"role": "robot", "content": cur_response, "avatar": robot_avator})
-        torch.empty_cache()
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
