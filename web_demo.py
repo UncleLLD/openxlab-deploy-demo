@@ -32,7 +32,6 @@ def load_model():
     model = (
         AutoModelForCausalLM.from_pretrained("model", trust_remote_code=True)
         .to(torch.bfloat16)
-        .cuda()
     )
     tokenizer = AutoTokenizer.from_pretrained("model", trust_remote_code=True)
     return model, tokenizer
@@ -72,7 +71,6 @@ def combine_history(prompt):
 
 
 def main():
-    # torch.cuda.empty_cache()
     print("load model begin.")
     model, tokenizer = load_model()
     print("load model end.")
@@ -116,7 +114,7 @@ def main():
             message_placeholder.markdown(cur_response)
         # Add robot response to chat history
         st.session_state.messages.append({"role": "robot", "content": cur_response, "avatar": robot_avator})
-        torch.cuda.empty_cache()
+        torch.empty_cache()
 
 
 if __name__ == "__main__":
